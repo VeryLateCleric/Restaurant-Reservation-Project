@@ -208,9 +208,16 @@ function hasValidUpdateStatus(req, res, next) {
 
 // Get list of reservations based on query params
 async function list(req, res) {
+  const {date} = req.query;
+
+  if (date) {
+    const data = await service.queryByDate(date);
+    return res.json({  data })
+  }
   const data = await service.list();
   res.json({ data });
 }
+
 
 // Get a single reservation from locals
 function read(req, res) {

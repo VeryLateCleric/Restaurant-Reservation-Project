@@ -6,6 +6,10 @@ function list() {
   return knex(table).select("*").orderBy("reservation_time", "ASC");
 }
 
+function queryByDate(reservation_date) {
+  return knex(table).select("*").where({ reservation_date }).orderBy("reservation_time", "ASC")
+}
+
 // Returns reservation by ID from database
 function read(reservation_id) {
   return knex(table)
@@ -43,6 +47,7 @@ async function updateStatus(reservation_id, status) {
 
 module.exports = {
   list,
+  queryByDate,
   read,
   create,
   updateReservation,
