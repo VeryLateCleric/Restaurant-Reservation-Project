@@ -1,5 +1,5 @@
-const reservationsService = require("./reservations.service");
-const asyncErrorBoundary = require(".");
+const service = require("./reservations.service");
+const asyncErrorBoundary = require("../errors/asyncErrorHandler");
 
 // Validation middleware
 async function reservationExists(req, res, next) {
@@ -28,7 +28,7 @@ function hasData(req, res, next) {
 
 // Confirm data received first name
 function hasFirstName(req, res, next) {
-  const name = req.body.data.first.name;
+  const name = req.body.data.first_name;
   if (name) {
     return next();
   }
@@ -40,7 +40,7 @@ function hasFirstName(req, res, next) {
 
 // Confirm data received last name
 function hasLastName(req, res, next) {
-  const name = req.body.data.last.name;
+  const name = req.body.data.last_name;
   if (name) {
     return next();
   }
@@ -64,7 +64,7 @@ function hasValidStatus(req, res, next) {
 
 // Confirm reservation contains a mobile number for contact
 function hasMobileNumber(req, res, next) {
-  const date = req.body.data.mobile_number;
+  const phone = req.body.data.mobile_number;
   if (phone) {
     return next();
   }
@@ -118,7 +118,7 @@ function hasFutureDate(dateString, timeString) {
 }
 
 // Reservation cannot be placed before right now
-function noPastReservation() {
+function noPastReservation(req, res, next) {
   const { reservation_date, reservation_time } = req.body.data;
 
   if (!hasFutureDate(reservation_date, reservation_time)) {
@@ -138,7 +138,9 @@ function validDateAndTime(req, res, next) {
   const openTime = "10:30";
   const closeTime = "21:30";
 
-  const reservationDateTime = new Date(`${reservation_date}T${reservation_time}`);
+  const reservationDateTime = new Date(
+    `${reservation_date}T${reservation_time}`
+  );
   const present = new Date();
 
   // Confirm reservation is not in the past
@@ -182,20 +184,20 @@ function hasEnoughPeople(req, res, next) {
 
   next({
     status: 400,
-    message: "The number of people must be at least 1."
-  })
+    message: "The number of people must be at least 1.",
+  });
 }
 
 // Updating reservations require valid statuses to be updated
 function hasValidUpdateStatus(req, res, next) {
   const status = req.body.data.status;
-  if (status !== 'unknown') {
+  if (status !== "unknown") {
     return next();
   }
   next({
     status: 400,
-    message: "Status cannot be 'unknown'"
-  })
+    message: "Status cannot be 'unknown'",
+  });
 }
 
 /******
@@ -206,9 +208,8 @@ function hasValidUpdateStatus(req, res, next) {
 
 // Get list of reservations based on query params
 async function list(req, res) {
-  res.json({
-    data: [],
-  });
+  const data = await service.list();
+  res.json({ data });
 }
 
 // Get a single reservation from locals
@@ -221,11 +222,23 @@ function read(req, res) {
 async function create(req, res) {
   const reservation = req.body.data;
   const data = await service.create(reservation);
-  res.status(201).json({ data })
+  res.status(201).json({ data });
+}
+
+async function updateReservation(req, res) {
+  const reservation = req.body.data;
+  const newReservation = await service.updateReservation(reservation);
+  const result = newReservation[0];
+  res.status(200).json({ data: result });
+}
+
+async function updateStatus(req, res) {
+  let result = await service.updateStatus(reservation.reservation_id, status);
+  res.status(200).json({ data: { status: result[0].status } });
 }
 
 module.exports = {
-  list: asyncErrorBoundary(list),
+  list: [asyncErrorBoundary(list)],
   create: [
     hasData,
     hasFirstName,
@@ -241,7 +254,7 @@ module.exports = {
     asyncErrorBoundary(create),
   ],
   read: [asyncErrorBoundary(reservationExists), read],
-  update: [
+  updateReservation: [
     hasFirstName,
     hasLastName,
     hasValidStatus,
@@ -253,7 +266,7 @@ module.exports = {
     validDateAndTime,
     hasEnoughPeople,
     hasValidUpdateStatus,
-    asyncErrorBoundary(update),
+    asyncErrorBoundary(updateReservation),
   ],
   delete: [
     // Add more later
@@ -262,6 +275,6 @@ module.exports = {
   updateStatus: [
     asyncErrorBoundary(reservationExists),
     hasValidUpdateStatus,
-    asyncErrorBoundary(updateStatus)
-  ]
+    asyncErrorBoundary(updateStatus),
+  ],
 };

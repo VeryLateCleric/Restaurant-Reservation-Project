@@ -6,6 +6,7 @@ function list() {
   return knex(table).select("*").orderBy("reservation_time", "ASC");
 }
 
+// TODO
 // Returns reservation by ID from database
 function read(reservation_id) {
   return knex(table);
@@ -24,10 +25,17 @@ function create(reservation) {
 }
 
 // Updates entire selected reservation, and returns updated object
-async function updateReservation(reservation_id) {
+async function updateReservation(reservation_id, reservation) {
   return knex(table)
     .where({ reservation_id })
     .update(reservation, "*")
+    .then((rows) => rows[0]);
+}
+
+async function updateStatus(reservation_id, status) {
+  return knex(table)
+    .where({ reservation_id })
+    .update({ status }, "*")
     .then((rows) => rows[0]);
 }
 
@@ -36,4 +44,5 @@ module.exports = {
   read,
   create,
   updateReservation,
+  updateStatus,
 };
