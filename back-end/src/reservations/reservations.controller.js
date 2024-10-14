@@ -53,7 +53,7 @@ function hasLastName(req, res, next) {
 //
 function hasValidStatus(req, res, next) {
   const status = req.body.data.status;
-  if (status !== "finished") {
+  if (status !== "seated" && status !== "finished") {
     return next();
   }
   next({
@@ -112,7 +112,7 @@ function hasValidDate(req, res, next) {
 }
 
 // Helper to noPastReservation, check reservation date happens only ever in the future
-function isFutureDate(dateString, timeString) {
+function hasFutureDate(dateString, timeString) {
   const reservationDateTime = new Date(`${dateString}T${timeString}`);
   return reservationDateTime > new Date();
 }
@@ -121,7 +121,7 @@ function isFutureDate(dateString, timeString) {
 function noPastReservation() {
   const { reservation_date, reservation_time } = req.body.data;
 
-  if (!isFutureDate(reservation_date, reservation_time)) {
+  if (!hasFutureDate(reservation_date, reservation_time)) {
     return next({
       status: 400,
       message: "Reservation must be in the future.",
@@ -131,11 +131,12 @@ function noPastReservation() {
   return next();
 }
 
+// Reservation must be on open days at open times
 function validDateAndTime(req, res, next) {
   const { reservation_date, reservation_time } = req.body.data;
-  const daysClosed = { 2: "Tuesday" }; //Restaurant currently closed on Tuesdays. Update here.
-  const openTime = "";
-  const closeTime = "";
+  const daysClosed = { 2: "Tuesday" }; //Restaurant currently closed on Tuesdays. Update here where needed.
+  const openTime = "10:30";
+  const closeTime = "21:30";
 
   const reservationDateTime = new Date(`${reservation_date}T${reservation_time}`);
   const present = new Date();
@@ -171,18 +172,49 @@ function validDateAndTime(req, res, next) {
   return next();
 }
 
+// Check we input at least 1 person in the reservation
 function hasEnoughPeople(req, res, next) {
+  const { people } = req.body.data;
 
+  if (Number.isInteger(people) && people > 0) {
+    return next();
+  }
+
+  next({
+    status: 400,
+    message: "The number of people must be at least 1."
+  })
 }
 
+// Updating reservations require valid statuses to be updated
+function hasValidUpdateStatus(req, res, next) {
+  const status = req.body.data.status;
+  if (status !== 'unknown') {
+    return next();
+  }
+  next({
+    status: 400,
+    message: "Status cannot be 'unknown'"
+  })
+}
 
-/**
+/******
+ * *
  * List handler for reservation resources
- */
+ * *
+ *****/
+
+// GET list of reservations based on query params
 async function list(req, res) {
   res.json({
     data: [],
   });
+}
+
+// GET a single reservation
+function read(req, res) {
+  const data = res.locals.reservation;
+  res.json({ data });
 }
 
 module.exports = {
