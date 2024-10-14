@@ -6,10 +6,12 @@ function list() {
   return knex(table).select("*").orderBy("reservation_time", "ASC");
 }
 
-// TODO
 // Returns reservation by ID from database
 function read(reservation_id) {
-  return knex(table);
+  return knex(table)
+    .select("*")
+    .where({ reservation_id })
+    .first();
 }
 
 // Create a new reservation and automatically assign status: booked to it

@@ -88,8 +88,8 @@ function hasReservationDate(req, res, next) {
 
 // Confirm a reservation time property was added
 function hasReservationTime(req, res, next) {
-  const date = req.body.data.reservation_date;
-  if (date) {
+  const time = req.body.data.reservation_time;
+  if (time) {
     return next();
   }
   next({
@@ -107,7 +107,7 @@ function hasValidDate(req, res, next) {
   }
   next({
     status: 400,
-    message: "valid_date property is required.",
+    message: "A reservation_date must be a date.",
   });
 }
 
@@ -124,7 +124,7 @@ function noPastReservation(req, res, next) {
   if (!hasFutureDate(reservation_date, reservation_time)) {
     return next({
       status: 400,
-      message: "Reservation must be in the future.",
+      message: "a reservation_time must be in the future.",
     });
   }
 
