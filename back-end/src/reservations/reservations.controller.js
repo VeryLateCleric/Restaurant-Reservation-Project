@@ -209,7 +209,7 @@ function hasValidUpdateStatus(req, res, next) {
 // Get list of reservations based on query params
 async function list(req, res) {
   const {date} = req.query;
-
+// TODO add property validation middleware for edge cases and robustness and more resume filler words
   if (date) {
     const data = await service.queryByDate(date);
     return res.json({  data })
