@@ -14,8 +14,18 @@ router
   .post(controller.create)
   .all(methodNotAllowed);
 
-router.route("/new")
-router.route("/asdfasdf")
-router.route("/fdsafdsa")
+router
+  .route("/new")
+  .post(controller.create)
+  .put(controller.updateStatus)
+  .all(methodNotAllowed);
+
+router
+  .route("/:reservation_id")
+  .get(controller.read)
+  .put(controller.update)
+  .all(methodNotAllowed);
+  
+router.route("/fdsafdsa");
 
 module.exports = router;
