@@ -15,7 +15,7 @@ async function reservationExists(req, res, next) {
   });
 }
 
-//
+// Confirm entry has data
 function hasData(req, res, next) {
   if (req.body.data) {
     return next();
@@ -26,7 +26,7 @@ function hasData(req, res, next) {
   });
 }
 
-//
+// Confirm data received first name
 function hasFirstName(req, res, next) {
   const name = req.body.data.first.name;
   if (name) {
@@ -38,7 +38,7 @@ function hasFirstName(req, res, next) {
   });
 }
 
-//
+// Confirm data received last name
 function hasLastName(req, res, next) {
   const name = req.body.data.last.name;
   if (name) {
@@ -53,7 +53,7 @@ function hasLastName(req, res, next) {
 //
 function hasValidStatus(req, res, next) {
   const status = req.body.data.status;
-  if (status !== "seated" && status !== "finished") {
+  if (status !== "finished") {
     return next();
   }
   next({
@@ -62,7 +62,7 @@ function hasValidStatus(req, res, next) {
   });
 }
 
-//
+// Confirm reservation contains a mobile number for contact
 function hasMobileNumber(req, res, next) {
   const date = req.body.data.mobile_number;
   if (phone) {
@@ -74,7 +74,7 @@ function hasMobileNumber(req, res, next) {
   });
 }
 
-//
+// Confirm the reservation date property was added
 function hasReservationDate(req, res, next) {
   const date = req.body.data.reservation_date;
   if (date) {
@@ -86,7 +86,7 @@ function hasReservationDate(req, res, next) {
   });
 }
 
-//
+// Confirm a reservation time property was added
 function hasReservationTime(req, res, next) {
   const date = req.body.data.reservation_date;
   if (date) {
@@ -98,7 +98,7 @@ function hasReservationTime(req, res, next) {
   });
 }
 
-// Ensure we do not pass through dates with too few
+// Ensure we do not pass through invalid dates
 function hasValidDate(req, res, next) {
   const date = req.body.data.reservation_date;
   const validDate = Date.parse(date);
@@ -204,17 +204,24 @@ function hasValidUpdateStatus(req, res, next) {
  * *
  *****/
 
-// GET list of reservations based on query params
+// Get list of reservations based on query params
 async function list(req, res) {
   res.json({
     data: [],
   });
 }
 
-// GET a single reservation
+// Get a single reservation from locals
 function read(req, res) {
   const data = res.locals.reservation;
   res.json({ data });
+}
+
+// Create a new reservation using data provided in req.body
+async function create(req, res) {
+  const reservation = req.body.data;
+  const data = await service.create(reservation);
+  res.status(201).json({ data })
 }
 
 module.exports = {
@@ -230,9 +237,10 @@ module.exports = {
     hasValidDate,
     noPastReservation,
     validDateAndTime,
+    hasEnoughPeople,
     asyncErrorBoundary(create),
   ],
-  read: [],
+  read: [asyncErrorBoundary(reservationExists), read],
   update: [
     hasFirstName,
     hasLastName,
@@ -241,10 +249,19 @@ module.exports = {
     hasReservationDate,
     hasReservationTime,
     hasValidDate,
+    noPastReservation,
+    validDateAndTime,
+    hasEnoughPeople,
+    hasValidUpdateStatus,
     asyncErrorBoundary(update),
   ],
   delete: [
     // Add more later
     asyncErrorBoundary(),
   ],
+  updateStatus: [
+    asyncErrorBoundary(reservationExists),
+    hasValidUpdateStatus,
+    asyncErrorBoundary(updateStatus)
+  ]
 };
