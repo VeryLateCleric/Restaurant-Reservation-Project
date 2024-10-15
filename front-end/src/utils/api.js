@@ -67,3 +67,56 @@ export async function listReservations(params, signal) {
     .then(formatReservationDate)
     .then(formatReservationTime);
 }
+
+/**
+ * Add new reservation to database.
+ * @param {*} reservation 
+ * @param {*} signal Optional abortController
+ */
+export async function createReservation(reservation, signal) {
+
+}
+
+/**
+ * Call a specific reservation from the database.
+ * @param {*} reservation_id 
+ * @param {*} signal Optional abortController
+ */
+export async function readReservation(reservation_id, signal) {
+
+}
+
+/**
+ * 
+ * @param {*} reservation_id 
+ * @param {*} signal Optional abortController
+ */
+export async function editReservation(reservation_id, signal) {
+
+}
+
+/**
+ * Call a list of all tables in the database
+ * @param {*} signal Optional abortController
+ */
+export async function listTables(signal) {
+  
+}
+
+/**
+ * Call a specific table from the database
+ * @param {*} TODO add table id
+ * @param {*} signal Optional abortController
+ */
+export async function readTable( signal) {
+
+}
+
+/**
+ * Create a new table and add it to the database.
+ * @param {*} table 
+ * @param {*} signal Optional abortController
+ */
+export async function createTable(table, signal) {
+
+}
