@@ -1,7 +1,7 @@
 import React from "react";
 
 export function CreateReservation() {
-    const defaultFormData = {
+    const initialTableData = {
         first_name: "",
         last_name: "",
         mobile_number: "",
@@ -10,7 +10,7 @@ export function CreateReservation() {
         people: 0,
     };
 
-    
+
 
 
     return (
