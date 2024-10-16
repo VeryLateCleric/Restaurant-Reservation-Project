@@ -32,6 +32,19 @@ function hasValidProperties(req, res, next) {
   return next();
 }
 
+function hasValidStatus(req, res, next) {
+  const { status = "booked" } = req.body.data;
+
+  // Check if status is one of the valid options
+  if (!["booked"].includes(status)) {
+    return next({
+      status: 400,
+      message: `Invalid status: ${status}. Status must be 'booked' when creating a reservation.`,
+    });
+  }
+  return next();
+}
+
 async function tableExists(req, res, next) {
   const { table_id } = req.params;
   const foundTable = await service.read(table_id);
@@ -75,13 +88,35 @@ async function isValidReservation(req, res, next) {
 }
 
 async function hasRequiredSeating(req, res, next) {
-  if( res.locals.table.capacity < res.locals.reservation.people) {
+  if (res.locals.table.capacity < res.locals.reservation.people) {
     next({
       status: 400,
-      message: "Table does not have the required capacity."
-    })
+      message: "Table does not have the required capacity.",
+    });
   }
   return next();
+}
+
+function checkTableStatus(desiredStatus) {
+  return function (req, res, next) {
+    const { table } = res.locals;
+
+    if (desiredStatus === "free" && table.reservation_id) {
+      return next({
+        status: 400,
+        message: "Table is already occupied.",
+      });
+    }
+
+    if (desiredStatus === "occupied" && !table.reservation_id) {
+      return next({
+        status: 400,
+        message: "Table is not occupied.",
+      });
+    }
+
+    return next();
+  };
 }
 
 async function hasReservationSeated(req, res, next) {
@@ -145,17 +180,23 @@ module.exports = {
   list: asyncErrorBoundary(list),
   create: [
     asyncErrorBoundary(hasValidProperties),
+    hasValidStatus,
     asyncErrorBoundary(isValidReservation),
     asyncErrorBoundary(create),
   ],
   read: [asyncErrorBoundary(tableExists), read],
   assignReservation: [
     asyncErrorBoundary(tableExists),
+    checkTableStatus("free"),
     hasReservationId,
     asyncErrorBoundary(isValidReservation),
     hasRequiredSeating,
     hasReservationSeated,
     asyncErrorBoundary(assignReservation),
   ],
-  finish: [asyncErrorBoundary(finishTable)],
+  finish: [
+    asyncErrorBoundary(tableExists),
+    checkTableStatus("occupied"),
+    asyncErrorBoundary(finishTable),
+  ],
 };

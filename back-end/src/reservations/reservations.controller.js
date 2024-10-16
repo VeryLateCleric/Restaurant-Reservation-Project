@@ -52,7 +52,7 @@ function hasLastName(req, res, next) {
 
 //
 function hasValidStatus(req, res, next) {
-  const status = req.body.data.status;
+  const { status } = req.body.data;
   if (status !== "finished") {
     return next();
   }
@@ -190,14 +190,41 @@ function hasEnoughPeople(req, res, next) {
 
 // Updating reservations require valid statuses to be updated
 function hasValidUpdateStatus(req, res, next) {
-  const status = req.body.data.status;
-  if (status !== "unknown") {
-    return next();
+  const { status } = req.body.data;
+  const currentStatus = res.locals.reservation.status;
+  const validTransitions = {
+    booked: ["seated"],
+    seated: ["finished"],
+    finished: [],
+  };
+
+  if (status === "unknown") {
+    return next({
+      status: 400,
+      message: "Status cannot be 'unknown'",
+    });
   }
-  next({
-    status: 400,
-    message: "Status cannot be 'unknown'",
-  });
+  // Check if transition between status is valid
+  if (!validTransitions[currentStatus].includes(status)) {
+    return next({
+      status: 400,
+      message: `Invalid status transition from ${currentStatus} to ${status}.`
+    })
+  }
+}
+
+async function preventUpdateWhenFinished(req, res, next) {
+  const { reservation_id } = req.params;
+  const reservation = await service.read(reservation_id);
+
+  if (reservation.status === "finished") {
+    return next({
+      status: 400,
+      message: "A finished reservation cannot be updated.",
+    });
+  }
+  res.locals.reservation = reservation; // Store the reservation for use later
+  return next();
 }
 
 /******
@@ -282,6 +309,7 @@ module.exports = {
   updateStatus: [
     asyncErrorBoundary(reservationExists),
     hasValidUpdateStatus,
+    preventUpdateWhenFinished,
     asyncErrorBoundary(updateStatus),
   ],
 };

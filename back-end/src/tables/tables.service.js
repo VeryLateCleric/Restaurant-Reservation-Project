@@ -1,16 +1,21 @@
 const db = require("../db/connection");
 const tableName = "tables";
 
-
 function list() {
   return db(tableName).select("*").orderBy("table_name");
 }
 
-
-function read(table_id) {
-    return db(tableName).where({ table_id }).first();
+function listByDate(date) {
+  return db("reservations")
+    .select("*")
+    .where({ reservation_date: date })
+    .andWhereNot({ status: "finished" }) // Exclude finished reservations
+    .orderBy("reservation_time");
 }
 
+function read(table_id) {
+  return db(tableName).where({ table_id }).first();
+}
 
 function create(table) {
   return db(tableName)
@@ -40,12 +45,19 @@ function assignReservation(reservation_id, table_id) {
     .then((rows) => rows[0]);
 }
 
-
 function deleteReservation(table_id) {
   return db(tableName)
     .where({ table_id })
-    .update({ table_status: "finished", reservation_id: null })
+    .update({ table_status: "free", reservation_id: null })
     .then((rows) => rows[0]);
 }
 
-module.exports = { list, create, read, update, assignReservation, deleteReservation }
+module.exports = {
+  list,
+  listByDate,
+  create,
+  read,
+  update,
+  assignReservation,
+  deleteReservation,
+};
