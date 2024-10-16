@@ -7,9 +7,10 @@ router
   .get(controller.list)
   .post(controller.create)
   .all(methodNotAllowed);
+  
 router
   .route("/:table_id/seat")
-  .put(controller.update)
+  .put(controller.assignReservation)
   .delete(controller.finish)
   .all(methodNotAllowed);
 

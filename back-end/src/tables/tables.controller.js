@@ -1,4 +1,4 @@
-const asyncErrorBoundary = require("../errors/asyncErrorHandler")
+const asyncErrorBoundary = require("../errors/asyncErrorHandler");
 const service = require("./tables.service");
 const reservationService = require("../reservations/reservations.service");
 
@@ -6,31 +6,31 @@ const REQUIRED_PROPERTIES = ["table_name", "capacity"];
 const VALID_PROPERTIES = [...REQUIRED_PROPERTIES, "reservation_id"];
 
 function hasValidProperties(req, res, next) {
-    const { data = {} } = req.body;
-  
-    for (let property of REQUIRED_PROPERTIES) {
-      if (!data[property])
-        return next({
-          status: 400,
-          message: `The data in the request body requires a ${property} field.`,
-        });
-    }
-  
-    if (data.table_name.length < 2)
+  const { data = {} } = req.body;
+
+  for (let property of REQUIRED_PROPERTIES) {
+    if (!data[property])
       return next({
         status: 400,
-        message: `The 'table_name' property must have a length of two or greater`,
+        message: `The data in the request body requires a ${property} field.`,
       });
-  
-    if (typeof data.capacity !== "number" || data.capacity < 1)
-      return next({
-        status: 400,
-        message: `The 'capacity' property must be a number that is 1 or greater`,
-      });
-  
-    res.locals.table = data;
-    return next();
   }
+
+  if (data.table_name.length < 2)
+    return next({
+      status: 400,
+      message: `The 'table_name' property must have a length of two or greater`,
+    });
+
+  if (typeof data.capacity !== "number" || data.capacity < 1)
+    return next({
+      status: 400,
+      message: `The 'capacity' property must be a number that is 1 or greater`,
+    });
+
+  res.locals.table = data;
+  return next();
+}
 
 async function tableExists(req, res, next) {
   const { table_id } = req.params;
@@ -74,6 +74,16 @@ async function isValidReservation(req, res, next) {
   return next();
 }
 
+async function hasRequiredSeating(req, res, next) {
+  if( res.locals.table.capacity < res.locals.reservation.people) {
+    next({
+      status: 400,
+      message: "Table does not have the required capacity."
+    })
+  }
+  return next();
+}
+
 async function hasReservationSeated(req, res, next) {
   const { reservation } = res.locals;
   if (reservation.status === "seated")
@@ -92,7 +102,6 @@ async function hasReservationSeated(req, res, next) {
 
 async function list(req, res) {
   const data = await service.list();
-  console.log("Data", data)
   res.json({ data });
 }
 
@@ -102,29 +111,27 @@ async function create(req, res) {
 }
 
 function read(req, res) {
-    res.json({ data: res.locals.table });
-  }
+  res.json({ data: res.locals.table });
+}
 
 async function update(req, res) {
   const updatedTable = {
     ...res.locals.table,
     reservation_id: req.body.data.reservation_id,
   };
-  console.log(updatedTable);
   await service.update(updatedTable);
   const data = await service.read(updatedTable.table_id);
-  console.log(data);
   res.json({ data });
 }
 
 // When seating a table, we must set the reservation status to 'seated'
-async function seatTable(req, res) {
-    const { reservation_id } = res.locals.reservation;
-    const { table_id } = res.locals.table;
-    await reservationService.updateStatus(reservation_id, "seated");
-    const data = await service.assignReservation(reservation_id, table_id);
-    res.json({ data });
-  }
+async function assignReservation(req, res) {
+  const { reservation_id } = res.locals.reservation;
+  const { table_id } = res.locals.table;
+  await reservationService.updateStatus(reservation_id, "seated");
+  const data = await service.assignReservation(reservation_id, table_id);
+  res.json({ data });
+}
 
 // When unseating/finishing a table, we must set the reservation status to 'finished'
 async function finishTable(req, res) {
@@ -138,16 +145,17 @@ module.exports = {
   list: asyncErrorBoundary(list),
   create: [
     asyncErrorBoundary(hasValidProperties),
-    // asyncErrorBoundary(isValidReservation),
+    asyncErrorBoundary(isValidReservation),
     asyncErrorBoundary(create),
   ],
   read: [asyncErrorBoundary(tableExists), read],
-  update: [
-    asyncErrorBoundary(update),
+  assignReservation: [
+    asyncErrorBoundary(tableExists),
     hasReservationId,
     asyncErrorBoundary(isValidReservation),
+    hasRequiredSeating,
     hasReservationSeated,
-    asyncErrorBoundary(seatTable),
+    asyncErrorBoundary(assignReservation),
   ],
   finish: [asyncErrorBoundary(finishTable)],
 };
