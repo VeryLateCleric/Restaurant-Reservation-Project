@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom/cjs/react-router-dom.min";
+import { formatAsDate } from "../utils/date-time";
+import { updateReservation, readReservation } from "../utils/api";
 
 export default function EditReservation() {
   const { reservationId } = useParams();
@@ -11,4 +13,25 @@ export default function EditReservation() {
     reservation_time: "",
     people: 0,
   });
+
+  useEffect(() => {
+    readReservation(reservationId)
+      .then((reservation) => {
+        // Format the reservation_date Date object automatically using
+        reservation.reservation_date = formatAsDate(
+          reservation.reservation_date
+        );
+        return reservation;
+      })
+      .then(setDefaultFormData);
+  }, [reservationId]);
+
+  // Higher order function to update the Reservation
+  const APICall = (reservation) => {
+    return updateReservation(reservationId, reservation);
+  };
+
+  return (
+    <ReservationForm type="Edit" defaultFormData={defaultFormData} APICall={APICall} />
+  );
 }

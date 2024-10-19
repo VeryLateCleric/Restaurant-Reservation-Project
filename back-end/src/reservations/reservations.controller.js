@@ -113,7 +113,12 @@ function hasValidDate(req, res, next) {
 
 // Helper to noPastReservation, check reservation date happens only ever in the future
 function hasFutureDate(dateString, timeString) {
+  console.log("DateString:", dateString);
+  console.log("timeString:", timeString);
   const reservationDateTime = new Date(`${dateString}T${timeString}`);
+  console.log("Reservation Date Time:", reservationDateTime);
+  console.log("Current Date Time:", new Date());
+  console.log("Is reservation time greater than current time? IS IT REALLY???:", reservationDateTime > new Date());
   return reservationDateTime > new Date();
 }
 
@@ -155,7 +160,7 @@ function validDateAndTime(req, res, next) {
   if (daysClosed[reservationDateTime.getDay()]) {
     return next({
       status: 400,
-      message: `The restaurant is closed on ${daysClosed}`,
+      message: `The restaurant is closed on ${Object.values(daysClosed).join(", ")}`,
     });
   }
 
@@ -193,7 +198,7 @@ function hasValidUpdateStatus(req, res, next) {
   const { status } = req.body.data;
   const currentStatus = res.locals.reservation.status;
   const validTransitions = {
-    booked: ["seated"],
+    booked: ["seated", "cancelled", "booked"],
     seated: ["finished"],
     finished: [],
   };
@@ -289,6 +294,7 @@ module.exports = {
   ],
   read: [asyncErrorBoundary(reservationExists), read],
   updateReservation: [
+    reservationExists,
     hasFirstName,
     hasLastName,
     hasValidStatus,

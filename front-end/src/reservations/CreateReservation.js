@@ -1,23 +1,27 @@
 import React from "react";
+import { createReservation } from "../utils/api";
+import ReservationForm from "./ReservationForm"
 
 export function CreateReservation() {
-    const initialTableData = {
-        first_name: "",
-        last_name: "",
-        mobile_number: "",
-        reservation_date: "",
-        reservation_time: "",
-        people: 0,
-    };
+  const initialTableData = {
+    first_name: "",
+    last_name: "",
+    mobile_number: "",
+    reservation_date: "",
+    reservation_time: "",
+    people: 0,
+  };
 
+//   Call API to create new reservations
+  const APICall = (reservation) => {
+    return createReservation(reservation);
+  };
 
-
-
-    return (
-        <>
-        <div>
-            <h1>Hello world!</h1>
-        </div>
-        </>
-    )
+  return (
+    <ReservationForm
+      type="New"
+      initialTableData={initialTableData}
+      APICall={APICall}
+    />
+  );
 }
