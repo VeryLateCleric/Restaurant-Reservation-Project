@@ -1,0 +1,22 @@
+.loader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+}
+
+.loader::before {
+  content: "";
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 0.4rem solid transparent;
+  border-top-color: var(--bs-primary);
+  border-radius: 50%;
+  animation: buffering 1.2s ease-in-out infinite;
+}
+
+@keyframes buffering {
+  to {
+    transform: rotate(1.5turn);
+  }
+}

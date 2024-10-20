@@ -1,3 +1,5 @@
+import { trackPromise } from "react-promise-tracker";
+
 /**
  * Defines the base URL for the API.
  * The default values is overridden by the `API_BASE_URL` environment variable.
@@ -70,29 +72,53 @@ export async function listReservations(params, signal) {
 
 /**
  * Add new reservation to database.
- * @param {*} reservation 
+ * @param {*} reservation
  * @param {*} signal Optional abortController
  */
 export async function createReservation(reservation, signal) {
-
+  const url = new URL(`${API_BASE_URL}/tables`);
+  const options = {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ data: reservation }),
+    signal,
+  };
+  return fetchJson(url, options, {});
 }
 
 /**
  * Call a specific reservation from the database.
- * @param {*} reservation_id 
+ * @param {*} reservation_id
  * @param {*} signal Optional abortController
  */
 export async function readReservation(reservation_id, signal) {
-
+  const url = new URL(`${API_BASE_URL}/reservations/${reservation_id}`);
+  return trackPromise(fetchJson(url, { headers, signal }, []));
 }
+
+/**
+ *
+ * @param {*} reservation_id
+ * @param {*} signal Optional abortController
+ */
+export async function editReservation(reservation_id, signal) {}
 
 /**
  * 
  * @param {*} reservation_id 
- * @param {*} signal Optional abortController
+ * @param {*} status 
+ * @param {*} signal 
+ * @returns 
  */
-export async function editReservation(reservation_id, signal) {
-
+export async function setReservationStatus(reservation_id, status, signal) {
+  const url = new URL(`${API_BASE_URL}/reservations/${reservation_id}/status`);
+  const options = {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ data: { status } }),
+    signal,
+  };
+  return fetchJson(url, options, {});
 }
 
 /**
@@ -100,7 +126,8 @@ export async function editReservation(reservation_id, signal) {
  * @param {*} signal Optional abortController
  */
 export async function listTables(signal) {
-  
+  const url = new URL(`${API_BASE_URL}/tables`);
+  return trackPromise(fetchJson(url, { headers, signal }, []));
 }
 
 /**
@@ -108,15 +135,37 @@ export async function listTables(signal) {
  * @param {*} TODO add table id
  * @param {*} signal Optional abortController
  */
-export async function readTable( signal) {
-
-}
+export async function readTable(signal) {}
 
 /**
  * Create a new table and add it to the database.
- * @param {*} table 
+ * @param {*} table
  * @param {*} signal Optional abortController
  */
 export async function createTable(table, signal) {
+  const url = new URL(`${API_BASE_URL}/tables`);
+  const options = {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ data: table }),
+    signal,
+  };
+  return fetchJson(url, options, {});
+}
 
+/**
+ * 
+ * @param {*} reservation_id 
+ * @param {*} status 
+ * @param {*} signal 
+ * @returns 
+ */
+export async function finishReservation(table_id, signal) {
+  const url = new URL(`${API_BASE_URL}/tables/${table_id}/seat`);
+  const options = {
+    method: "DELETE",
+    headers,
+    signal,
+  };
+  return fetchJson(url, options, {});
 }

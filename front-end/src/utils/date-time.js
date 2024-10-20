@@ -41,6 +41,24 @@ export function formatAsTime(timeString) {
 }
 
 /**
+ * Format a time string in "HH:MM (AM/PM)" 12 hour format
+ * @param timeString
+ *  HH:MM or HH:MM:SS 24 hour format
+ * @returns
+ *  the specified time string in "HH:MM (AM/PM)" 12 hour format
+ */
+export function convert12HourTime(timeString) {
+  let hours = Number(timeString.split(":")[0]);
+  const minutes = timeString.split(":")[1];
+  let meridiem = " AM";
+  if (hours > 12) {
+    hours -= 12;
+    meridiem = " PM";
+  }
+  return `${hours}:${minutes}${meridiem}`;
+}
+
+/**
  * Today's date as YYYY-MM-DD.
  * @returns {*}
  *  the today's date formatted as YYYY-MM-DD
