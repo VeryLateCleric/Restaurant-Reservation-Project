@@ -3,7 +3,7 @@ const service = require("./tables.service");
 const reservationService = require("../reservations/reservations.service");
 
 const REQUIRED_PROPERTIES = ["table_name", "capacity"];
-const VALID_PROPERTIES = [...REQUIRED_PROPERTIES, "reservation_id"];
+// const VALID_PROPERTIES = [...REQUIRED_PROPERTIES, "reservation_id"];
 
 function hasValidProperties(req, res, next) {
   const { data = {} } = req.body;

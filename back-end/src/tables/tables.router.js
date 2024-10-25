@@ -7,6 +7,9 @@ router
   .get(controller.list)
   .post(controller.create)
   .all(methodNotAllowed);
+
+router
+  .route("/:table_id").get(controller.read).all(methodNotAllowed);
   
 router
   .route("/:table_id/seat")

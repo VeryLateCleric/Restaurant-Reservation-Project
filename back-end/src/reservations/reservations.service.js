@@ -7,15 +7,33 @@ function list() {
 }
 
 function queryByDate(reservation_date) {
-  return knex(tableName).select("*").where({ reservation_date }).orderBy("reservation_time", "ASC")
+  return knex(tableName)
+    .select("*")
+    .where({ reservation_date })
+    .whereNot({ status: "finished" })
+    .orderBy("reservation_time", "ASC");
+}
+// 
+function searchByProperty(queriesObject) {
+  const entries = Object.entries(queriesObject);
+  if (!entries.find(([, value]) => !!value)) return list();
+
+  let whereQuery = "";
+  for (let i = 0; i < entries.length; i++) {
+    const [name, value] = entries[i];
+    whereQuery += `${name}::text ilike '%${value}%'`;
+    if (i !== entries.length - 1) whereQuery += " AND ";
+  }
+
+  return knex(tableName)
+    .select("*")
+    .where(knex.raw(whereQuery))
+    .orderBy("reservation_date", "DESC");
 }
 
 // Returns reservation by ID from database
 function read(reservation_id) {
-  return knex(tableName)
-    .select("*")
-    .where({ reservation_id })
-    .first();
+  return knex(tableName).select("*").where({ reservation_id }).first();
 }
 
 // Create a new reservation and automatically assign status: booked to it
@@ -42,12 +60,13 @@ async function updateStatus(reservation_id, status) {
   return knex(tableName)
     .where({ reservation_id })
     .update({ status }, "*")
-    .then((rows) => rows[0]);
+    .then((updatedRows) => updatedRows[0]);
 }
 
 module.exports = {
   list,
   queryByDate,
+  searchByProperty,
   read,
   create,
   updateReservation,

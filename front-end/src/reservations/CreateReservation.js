@@ -20,7 +20,7 @@ export function CreateReservation() {
   return (
     <ReservationForm
       type="New"
-      initialTableData={initialTableData}
+      defaultFormData={initialTableData}
       APICall={APICall}
     />
   );

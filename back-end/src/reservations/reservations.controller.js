@@ -53,12 +53,30 @@ function hasLastName(req, res, next) {
 //
 function hasValidStatus(req, res, next) {
   const { status } = req.body.data;
-  if (status !== "finished") {
+  const allowedStatuses = ["booked", "seated", "finished", "cancelled"];
+
+  if (!status) {
+    // Set status to "booked" by default if not provided
+    req.body.data.status = "booked";
     return next();
   }
+
+  // If creating, only allow "booked"
+  if (status !== "booked" && req.method === "POST") {
+    return next({
+      status: 400,
+      message: `Status cannot be '${status}' when creating a reservation.`,
+    });
+  }
+
+  // Allow valid status transitions for updates
+  if (allowedStatuses.includes(status)) {
+    return next();
+  }
+
   next({
     status: 400,
-    message: "Status cannot be finished",
+    message: `Status ${status} is not valid.`,
   });
 }
 
@@ -113,12 +131,7 @@ function hasValidDate(req, res, next) {
 
 // Helper to noPastReservation, check reservation date happens only ever in the future
 function hasFutureDate(dateString, timeString) {
-  console.log("DateString:", dateString);
-  console.log("timeString:", timeString);
   const reservationDateTime = new Date(`${dateString}T${timeString}`);
-  console.log("Reservation Date Time:", reservationDateTime);
-  console.log("Current Date Time:", new Date());
-  console.log("Is reservation time greater than current time? IS IT REALLY???:", reservationDateTime > new Date());
   return reservationDateTime > new Date();
 }
 
@@ -160,7 +173,9 @@ function validDateAndTime(req, res, next) {
   if (daysClosed[reservationDateTime.getDay()]) {
     return next({
       status: 400,
-      message: `The restaurant is closed on ${Object.values(daysClosed).join(", ")}`,
+      message: `The restaurant is closed on ${Object.values(daysClosed).join(
+        ", "
+      )}`,
     });
   }
 
@@ -213,14 +228,16 @@ function hasValidUpdateStatus(req, res, next) {
   if (!validTransitions[currentStatus].includes(status)) {
     return next({
       status: 400,
-      message: `Invalid status transition from ${currentStatus} to ${status}.`
-    })
+      message: `Invalid status transition from ${currentStatus} to ${status}.`,
+    });
   }
+
+  return next();
 }
 
 async function preventUpdateWhenFinished(req, res, next) {
-  const { reservation_id } = req.params;
-  const reservation = await service.read(reservation_id);
+  const { reservationId } = req.params;
+  const reservation = await service.read(reservationId);
 
   if (reservation.status === "finished") {
     return next({
@@ -238,18 +255,13 @@ async function preventUpdateWhenFinished(req, res, next) {
  * *
  *****/
 
-// Get list of reservations based on query params
 async function list(req, res) {
-  const {date} = req.query;
-// TODO add property validation middleware for edge cases and robustness and more resume filler words
-  if (date) {
-    const data = await service.queryByDate(date);
-    return res.json({  data })
-  }
-  const data = await service.list();
+  const { date: reservation_date } = req.query;
+  const data = reservation_date
+    ? await service.queryByDate(reservation_date)
+    : await service.searchByProperty(req.query);
   res.json({ data });
 }
-
 
 // Get a single reservation from locals
 function read(req, res) {
@@ -265,15 +277,25 @@ async function create(req, res) {
 }
 
 async function updateReservation(req, res) {
-  const reservation = req.body.data;
-  const newReservation = await service.updateReservation(reservation);
-  const result = newReservation[0];
-  res.status(200).json({ data: result });
+  const { reservation } = res.locals;
+  const newReservation = req.body.data;
+
+  const data = await service.updateReservation(reservation.reservation_id, newReservation);
+  if (!data) {
+    return res.status(404).json({ error: "Reservation not found" });
+  }
+  res.json({ data });
 }
 
+// console.log("newReservation:", newReservation);
+// console.log("reservation:", reservation);
+// console.log("data:", data);
+
 async function updateStatus(req, res) {
-  let result = await service.updateStatus(reservation.reservation_id, status);
-  res.status(200).json({ data: { status: result[0].status } });
+  const { reservation_id } = res.locals.reservation;
+  const { status } = req.body.data;
+  let result = await service.updateStatus(reservation_id, status);
+  res.status(200).json({ data: { status: result.status } });
 }
 
 module.exports = {
