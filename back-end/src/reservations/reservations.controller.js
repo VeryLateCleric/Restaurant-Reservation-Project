@@ -209,28 +209,22 @@ function hasEnoughPeople(req, res, next) {
 }
 
 // Updating reservations require valid statuses to be updated
-function hasValidUpdateStatus(req, res, next) {
+function hasValidStatusTransition(req, res, next) {
   const { status } = req.body.data;
   const currentStatus = res.locals.reservation.status;
   const validTransitions = {
-    booked: ["seated", "cancelled", "booked"],
+    booked: ["seated", "cancelled", "booked", "finished"],
     seated: ["finished"],
     finished: [],
   };
-
-  if (status === "unknown") {
-    return next({
-      status: 400,
-      message: "Status cannot be 'unknown'",
-    });
-  }
-  // Check if transition between status is valid
-  if (!validTransitions[currentStatus].includes(status)) {
-    return next({
-      status: 400,
-      message: `Invalid status transition from ${currentStatus} to ${status}.`,
-    });
-  }
+      
+      // Check if transition between status is valid
+      if (!validTransitions[currentStatus].includes(status)) {
+        return next({
+          status: 400,
+          message: `Invalid status transition from ${currentStatus} to ${status}.`,
+        });
+      }
 
   return next();
 }
@@ -238,6 +232,7 @@ function hasValidUpdateStatus(req, res, next) {
 async function preventUpdateWhenFinished(req, res, next) {
   const { reservationId } = req.params;
   const reservation = await service.read(reservationId);
+
 
   if (reservation.status === "finished") {
     return next({
@@ -287,15 +282,13 @@ async function updateReservation(req, res) {
   res.json({ data });
 }
 
-// console.log("newReservation:", newReservation);
-// console.log("reservation:", reservation);
-// console.log("data:", data);
-
 async function updateStatus(req, res) {
   const { reservation_id } = res.locals.reservation;
   const { status } = req.body.data;
-  let result = await service.updateStatus(reservation_id, status);
-  res.status(200).json({ data: { status: result.status } });
+  // console.log("Updating status for reservation_id:", reservation_id, "to status:", status);
+  let data = await service.updateStatus(reservation_id, status);
+  // console.log("Updated reservation data:", data);
+  res.status(200).json({ data });
 }
 
 module.exports = {
@@ -327,7 +320,7 @@ module.exports = {
     noPastReservation,
     validDateAndTime,
     hasEnoughPeople,
-    hasValidUpdateStatus,
+    hasValidStatusTransition,
     asyncErrorBoundary(updateReservation),
   ],
   delete: [
@@ -336,8 +329,9 @@ module.exports = {
   ],
   updateStatus: [
     asyncErrorBoundary(reservationExists),
-    hasValidUpdateStatus,
-    preventUpdateWhenFinished,
+    hasValidStatus,
+    hasValidStatusTransition,
+    asyncErrorBoundary(preventUpdateWhenFinished),
     asyncErrorBoundary(updateStatus),
   ],
 };
