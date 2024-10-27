@@ -32,7 +32,7 @@ function Dashboard({ date }) {
     finishButton: "",
     table_name: "Table Name",
     capacity: "Maximum Capacity",
-    occupied: "Availability",
+    table_status: "Availability",
   };
 
   const [reservations, setReservations] = useState([]);

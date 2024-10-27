@@ -4,7 +4,6 @@ import LoadingMessage from "../LoadingMessage/LoadingMessage"
 import TableHead from "./TableHead";
 import TableRow from "./TableRow";
 
-
 export default function DisplayTable({
     data,
     objCols = {},

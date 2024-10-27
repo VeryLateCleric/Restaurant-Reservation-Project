@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom/cjs/react-router-dom.min";
 import { formatAsDate } from "../utils/date-time";
-import { updateReservation, readReservation } from "../utils/api";
+import { editReservation, readReservation } from "../utils/api";
+import ReservationForm from "./ReservationForm";
 
 export default function EditReservation() {
   const { reservationId } = useParams();
@@ -23,12 +24,12 @@ export default function EditReservation() {
         );
         return reservation;
       })
-      .then(setDefaultFormData);
+      // .then(setDefaultFormData);
   }, [reservationId]);
 
   // Higher order function to update the Reservation
   const APICall = (reservation) => {
-    return updateReservation(reservationId, reservation);
+    return editReservation(reservationId, reservation);
   };
 
   return (

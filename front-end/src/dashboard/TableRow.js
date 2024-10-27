@@ -12,12 +12,6 @@ export default function TableRow({ rowObject, propNames, buttonFunction }) {
       </td>
     );
   
-    // Helper function to handle boolean data
-    const renderBooleanCell = (index, data) =>
-      createCell(index, data ? "Occupied" : "Free", {
-        "data-table-id-status": rowObject.table_id,
-      });
-  
     // Helper function to render assignment button if data is undefined
     const renderButtonCell = (index, propName) =>
       createCell(index, (
@@ -40,11 +34,12 @@ export default function TableRow({ rowObject, propNames, buttonFunction }) {
     return (
       <tr>
         {propNames.map((propName, index) => {
-          const data = rowObject[propName];
-  
+          let data = rowObject[propName];
+          if (data === "seated") {
+            data = "occupied"
+          }
+          
           switch (true) {
-            case typeof data === "boolean":
-              return renderBooleanCell(index, data);
             case data === undefined || data === null:
               return renderButtonCell(index, propName);
             case ["booked", "seated", "finished", "cancelled"].includes(data):

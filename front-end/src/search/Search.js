@@ -1,76 +1,77 @@
 import React, { useState } from "react";
-import ReservationList from "../reservations/ReservationList";
-import { listReservations } from "../../utils/api";
-import ErrorAlert from "../../layout/ErrorAlert";
-import "./Search.css"
-import SearchWithoutReservation from "./SearchWithoutReservation";
+import { listReservations } from "../utils/api";
+import { Link } from "react-router-dom";
 
-export default function SearchPage() {
+export default function Search() {
   const [mobileNumber, setMobileNumber] = useState("");
-  const [foundReservations, setFoundReservations] = useState([]);
-  const [findError, setFindError] = useState(null);
-  const [showList, setShowList] = useState(false);
+  const [reservations, setReservations] = useState([]);
+  const [error, setError] = useState(null);
 
-  const handleChange = (event) => {
+  const handleSearch = async (event) => {
     event.preventDefault();
-    setMobileNumber(event.target.value);
-  };
+    setError(null);
 
-  const handleFind = (event) => {
-    event.preventDefault();
-    const ac = new AbortController();
-    function findReservations() {
-      const mobile_number = mobileNumber;
-      listReservations({ mobile_number }, ac.signal)
-        .then(setFoundReservations)
-        .then(setShowList(true))
-        .catch(setFindError);
+    // Clean up mobile number input
+    const cleanedNumber = mobileNumber.replace(/\D/g, "");
+
+    try {
+      const result = await listReservations({ mobile_number: cleanedNumber });
+      setReservations(result);
+      if (result.length === 0) setError("No reservations found");
+    } catch (error) {
+      setError("Error fetching reservations");
     }
-    findReservations();
-    return () => ac.abort();
   };
 
   return (
-    <>
-      <div className="search search-title">
-        <h1>Search Reservations</h1>
-      </div>
-      <div className="search search-error">
-        <ErrorAlert error={findError} />
-      </div>
+    <main>
+      <h1>Search Reservations</h1>
+      <form onSubmit={handleSearch}>
+        <label htmlFor="mobile_number">Enter a customer's phone number</label>
+        <input
+          type="text"
+          name="mobile_number"
+          placeholder="Enter a customer's phone number"
+          value={mobileNumber}
+          onChange={(e) => setMobileNumber(e.target.value)}
+        />
+        <button type="submit">Find</button>
+      </form>
 
-      <div className="search input-group">
-        <label htmlFor="mobile_number">
-          Mobile Number:
-          <input
-            id="mobile_number"
-            className="form-control"
-            name="mobile_number"
-            type="text"
-            required
-            placeholder="Enter Mobile Number"
-            onChange={handleChange}
-            value={mobileNumber}
-          />
-        </label>
-        <div className="input-group mb-3">
-          <button
-            className="btn btn-outline-dark"
-            type="submit"
-            onClick={handleFind}
-          >Find
-          </button>
-        </div>
-      </div>
-      {showList ? (
-        <div className="search search-results">
-          {foundReservations.length ? (
-            <ReservationList reservations={foundReservations} />
-          ) : (
-            <SearchWithoutReservation />
-          )}
-        </div>
-      ) : null}
-    </>
+      {error && <p>{error}</p>}
+
+      {reservations.length > 0 && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Reservation ID</th>
+              <th>Name</th>
+              <th>Mobile Number</th>
+              <th>Reservation Date</th>
+              <th>Status</th>
+              <th>Seat</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reservations.map((reservation) => (
+              <tr key={reservation.reservation_id}>
+                <td>{reservation.reservation_id}</td>
+                <td>
+                  {reservation.first_name} {reservation.last_name}
+                </td>
+                <td>{reservation.mobile_number}</td>
+                <td>{reservation.reservation_date}</td>
+                <td>{reservation.status}</td>
+                <td>
+                  <Link to={`/reservations/${reservation.reservation_id}/seat`}>
+                    Seat
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </main>
   );
 }

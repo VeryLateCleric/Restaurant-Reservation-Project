@@ -76,7 +76,7 @@ export async function listReservations(params, signal) {
  * @param {*} signal Optional abortController
  */
 export async function createReservation(reservation, signal) {
-  const url = new URL(`${API_BASE_URL}/tables`);
+  const url = new URL(`${API_BASE_URL}/reservations/new`);
   const options = {
     method: "POST",
     headers,
@@ -89,7 +89,9 @@ export async function createReservation(reservation, signal) {
 /**
  * Call a specific reservation from the database.
  * @param {*} reservation_id
- * @param {*} signal Optional abortController
+ *  match id to specific reservation
+ * @param {*} signal 
+ *  optional abortController
  */
 export async function readReservation(reservation_id, signal) {
   const url = new URL(`${API_BASE_URL}/reservations/${reservation_id}`);
@@ -97,17 +99,32 @@ export async function readReservation(reservation_id, signal) {
 }
 
 /**
- *
+ * 
  * @param {*} reservation_id
- * @param {*} signal Optional abortController
+ *  match id to specific reservation
+ * @param {*} signal 
+ *  optional abortController
  */
-export async function editReservation(reservation_id, signal) {}
+export async function editReservation(reservation_id, newReservation, signal) {
+  const url = new URL(`${API_BASE_URL}/reservations/${reservation_id}`);
+  const options = {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ data: newReservation }),
+    signal,
+  };
+  return fetchJson(url, options, {});
+}
 
 /**
- * 
+ * This will update the reservation without seating it at a table.
+ * This allows easier canceling or time changes
  * @param {*} reservation_id 
+ *  matching reservation to unique id
  * @param {*} status 
+ *  The status we are setting the updated reservation to.
  * @param {*} signal 
+ *  AbortControler signal. Optional
  * @returns 
  */
 export async function setReservationStatus(reservation_id, status, signal) {
@@ -154,11 +171,33 @@ export async function createTable(table, signal) {
 }
 
 /**
- * 
- * @param {*} reservation_id 
- * @param {*} status 
- * @param {*} signal 
- * @returns 
+ * Adds a new table to our database
+ * @param tableId
+ * @param reservationId
+ * @param signal //AbortControler signal. Optional
+ * @returns
+ */
+export async function updateTable(tableId, reservationId, signal) {
+  const url = `${API_BASE_URL}/tables/${tableId}/seat`;
+  const options = {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: { reservation_id: reservationId } }),
+    signal,
+  };
+  return await fetch(url, options)
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error("Error updating table:", error);
+      throw error;
+    });
+}
+
+/**
+ *
+ * @param {*} table_id
+ * @param signal //AbortControler signal. Optional
+ * @returns
  */
 export async function finishReservation(table_id, signal) {
   const url = new URL(`${API_BASE_URL}/tables/${table_id}/seat`);
