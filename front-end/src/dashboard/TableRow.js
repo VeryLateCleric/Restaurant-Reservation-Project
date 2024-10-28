@@ -26,6 +26,9 @@ export default function TableRow({ rowObject, propNames, buttonFunction }) {
     const renderReservationStatusCell = (index, data) =>
       createCell(index, data, { "data-reservation-id-status": rowObject.reservation_id });
   
+    const renderTableStatusCell = (index, data) =>
+      createCell(index, data, { "data-table-id-status": rowObject.table_id });
+  
     // Helper function to render time data in 12-hour format
     const renderTimeCell = (index, data) =>
       createCell(index, convert12HourTime(data));
@@ -35,15 +38,17 @@ export default function TableRow({ rowObject, propNames, buttonFunction }) {
       <tr>
         {propNames.map((propName, index) => {
           let data = rowObject[propName];
-          if (data === "seated") {
-            data = "occupied"
-          }
+          // if (data === "seated") {
+          //   data = "occupied"
+          // }
           
           switch (true) {
             case data === undefined || data === null:
               return renderButtonCell(index, propName);
             case ["booked", "seated", "finished", "cancelled"].includes(data):
               return renderReservationStatusCell(index, data);
+            case ["free", "occupied"].includes(data):
+              return renderTableStatusCell(index, data);
             case /time/gi.test(propName):
               return renderTimeCell(index, data);
             default:

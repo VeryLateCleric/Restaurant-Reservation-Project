@@ -12,11 +12,11 @@ export default function Search() {
     setError(null);
 
     // Clean up mobile number input
-    const cleanedNumber = mobileNumber.replace(/\D/g, "");
+    const cleanedNumber = mobileNumber;
 
     try {
       const result = await listReservations({ mobile_number: cleanedNumber });
-      setReservations(result);
+      await setReservations(result);
       if (result.length === 0) setError("No reservations found");
     } catch (error) {
       setError("Error fetching reservations");

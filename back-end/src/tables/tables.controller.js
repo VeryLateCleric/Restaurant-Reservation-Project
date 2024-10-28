@@ -32,19 +32,6 @@ function hasValidProperties(req, res, next) {
   return next();
 }
 
-function hasValidStatus(req, res, next) {
-  const { status = "booked" } = req.body.data;
-
-  // Check if status is one of the valid options
-  if (!["booked"].includes(status)) {
-    return next({
-      status: 400,
-      message: `Invalid status: ${status}. Status must be 'booked' when creating a reservation.`,
-    });
-  }
-  return next();
-}
-
 async function tableExists(req, res, next) {
   const { table_id } = req.params;
   const foundTable = await service.read(table_id);
@@ -84,6 +71,16 @@ async function isValidReservation(req, res, next) {
     });
 
   res.locals.reservation = reservation;
+  return next();
+}
+
+async function defaultTableStatus(req, res, next) {
+  const { table } = res.locals;
+  if (table.reservation_id) {
+    table.table_status = "occupied";
+    return next();
+  }
+  table.table_status = "free";
   return next();
 }
 
@@ -180,8 +177,8 @@ module.exports = {
   list: asyncErrorBoundary(list),
   create: [
     asyncErrorBoundary(hasValidProperties),
-    hasValidStatus,
     asyncErrorBoundary(isValidReservation),
+    asyncErrorBoundary(defaultTableStatus),
     asyncErrorBoundary(create),
   ],
   read: [asyncErrorBoundary(tableExists), read],

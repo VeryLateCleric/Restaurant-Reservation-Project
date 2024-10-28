@@ -41,7 +41,7 @@ async function update(updatedTable) {
 function assignReservation(reservation_id, table_id) {
   return db(tableName)
     .where({ table_id })
-    .update({ table_status: "seated", reservation_id }, "*")
+    .update({ table_status: "occupied", reservation_id }, "*")
     .then((rows) => rows[0]);
 }
 

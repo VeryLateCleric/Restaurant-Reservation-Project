@@ -1,9 +1,9 @@
 import React from "react";
 
 export default function FinishEatingButton({ table, finishTable }) {
-    const { table_id: id, occupied } = table;
+    const { table_id: id, table_status } = table;
   
-    const buttonStyle = occupied ? "btn-danger" : "btn-secondary";
+    const buttonStyle = table_status === "occupied" ? "btn-danger" : "btn-secondary";
   
     const onClick = () => {
       finishTable(id);
@@ -14,7 +14,7 @@ export default function FinishEatingButton({ table, finishTable }) {
         type="button"
         onClick={onClick}
         className={`btn ${buttonStyle}`}
-        disabled={!occupied}
+        disabled={table_status === "free"}
         data-table-id-finish={id}
       >
         Finish
