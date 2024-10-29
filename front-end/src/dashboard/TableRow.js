@@ -55,6 +55,7 @@ export default function TableRow({ rowObject, propNames, buttonFunction }) {
               return createCell(index, data);
           }
         })}
+        
       </tr>
     );
   }

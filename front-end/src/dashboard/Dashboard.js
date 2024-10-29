@@ -64,9 +64,10 @@ function Dashboard({ date }) {
   }
 
   // Function to load both Tables and Reservations
-  function loadDashboard() {
-    loadReservations();
-    loadTables();
+  async function loadDashboard() {
+    try {
+      await Promise.all([loadReservations(), loadTables()]);
+    } catch (error) {}
   }
 
   // Function to call finishReservation, then to call listTables

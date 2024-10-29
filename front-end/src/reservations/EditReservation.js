@@ -3,10 +3,12 @@ import { useParams } from "react-router-dom/cjs/react-router-dom.min";
 import { formatAsDate } from "../utils/date-time";
 import { editReservation, readReservation } from "../utils/api";
 import ReservationForm from "./ReservationForm";
+// import CancelButton from "../dashboard/buttons/CancelButton";
 
 export default function EditReservation() {
   const { reservationId } = useParams();
-  const [defaultFormData] = useState({
+  // const history = useHistory();
+  const [defaultFormData, setDefaultFormData] = useState({
     first_name: "",
     last_name: "",
     mobile_number: "",
@@ -22,9 +24,9 @@ export default function EditReservation() {
         reservation.reservation_date = formatAsDate(
           reservation.reservation_date
         );
-        return reservation;
+        setDefaultFormData(reservation);
       })
-      // .then(setDefaultFormData);
+      .catch((error) => console.error("Error loading reservation:", error));
   }, [reservationId]);
 
   // Higher order function to update the Reservation
@@ -33,6 +35,16 @@ export default function EditReservation() {
   };
 
   return (
-    <ReservationForm type="Edit" defaultFormData={defaultFormData} APICall={APICall} />
+    <div>
+      <ReservationForm
+        type="Edit"
+        defaultFormData={defaultFormData}
+        APICall={APICall}
+      />
+      {/* <CancelButton
+        reservation={defaultFormData}
+        cancelReservation={cancelReservation}
+      /> */}
+    </div>
   );
 }
